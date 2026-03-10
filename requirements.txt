@@ -1,0 +1,7 @@
+gymnasium
+stable-baselines3
+pygame
+numpy
+tensorboard
+fastapi
+uvicorn
