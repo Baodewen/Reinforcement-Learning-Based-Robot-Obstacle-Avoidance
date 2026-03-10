@@ -16,6 +16,7 @@ from pydantic import BaseModel, Field
 from training.train import resolve_device
 from utils import config
 from utils.map_io import MapValidationError, list_maps, load_map, save_map, serialize_map_data
+from utils.model_compat import load_ppo_with_env_config
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -239,6 +240,10 @@ def launch_demo(request: DemoRequest):
         model_path = (PROJECT_ROOT / model_path).resolve()
     if not model_path.exists():
         raise HTTPException(status_code=404, detail="Model file not found.")
+    try:
+        _, env_config = load_ppo_with_env_config(model_path)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Failed to load model: {exc}") from exc
 
     command = [
         str(PYTHON_EXE),
@@ -261,5 +266,5 @@ def launch_demo(request: DemoRequest):
         command.extend(["--map_path", str(map_path)])
 
     subprocess.Popen(command, cwd=PROJECT_ROOT)
-    return {"ok": True, "command": command}
+    return {"ok": True, "command": command, "env_config": env_config}
 

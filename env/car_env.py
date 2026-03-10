@@ -120,6 +120,7 @@ class CarEnv(gym.Env):
         self.heading += self.angular_vel * config.DT
         dx = self.linear_vel * math.cos(self.heading) * config.DT
         dy = self.linear_vel * math.sin(self.heading) * config.DT
+        step_distance = float(math.hypot(dx, dy))
         self.pos += np.array([dx, dy], dtype=np.float32)
         self.steps += 1
         self.trail.append(tuple(self.pos.tolist()))
@@ -136,6 +137,7 @@ class CarEnv(gym.Env):
 
         reward = 0.3 * progress
         reward -= 0.01
+        reward -= config.PATH_LENGTH_PENALTY * step_distance
         if min_lidar < config.SAFETY_DIST / config.LIDAR_RANGE:
             ratio = (config.SAFETY_DIST / config.LIDAR_RANGE - min_lidar) / (config.SAFETY_DIST / config.LIDAR_RANGE)
             reward -= 0.1 * ratio
@@ -165,6 +167,8 @@ class CarEnv(gym.Env):
             "angular_vel": self.angular_vel,
             "reward": reward,
             "min_lidar": min_lidar,
+            "step_distance": step_distance,
+            "path_penalty": config.PATH_LENGTH_PENALTY * step_distance,
             "episode_result": episode_result,
             "episode_id": self.episode_id,
             "start": self.start,

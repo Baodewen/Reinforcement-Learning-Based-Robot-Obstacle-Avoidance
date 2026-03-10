@@ -4,12 +4,12 @@ import sys
 from pathlib import Path
 
 import numpy as np
-from stable_baselines3 import PPO
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from env.car_env import CarEnv
 from utils.map_io import load_map
+from utils.model_compat import load_ppo_with_env_config
 
 
 def run_episode(env, model):
@@ -40,10 +40,16 @@ def main():
 
     model_path = Path(args.model_path).resolve()
     fixed_map = load_map(args.map_path) if args.map_path else None
-    env = CarEnv(render_mode=None, seed=args.seed, fixed_map=fixed_map)
-    model = PPO.load(str(model_path))
+    model, env_config = load_ppo_with_env_config(model_path)
+    env = CarEnv(
+        render_mode=None,
+        seed=args.seed,
+        fixed_map=fixed_map,
+        lidar_rays=env_config["lidar_rays"],
+    )
 
     print("model_path", model_path)
+    print("lidar_rays", env_config["lidar_rays"])
     if args.map_path:
         print("map_path", Path(args.map_path).resolve())
     results = [run_episode(env, model) for _ in range(args.episodes)]

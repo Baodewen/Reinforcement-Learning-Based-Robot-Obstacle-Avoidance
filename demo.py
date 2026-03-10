@@ -4,12 +4,12 @@ import sys
 from pathlib import Path
 
 import pygame
-from stable_baselines3 import PPO
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from env.car_env import CarEnv
 from utils.map_io import load_map
+from utils.model_compat import load_ppo_with_env_config
 
 
 def build_overlay(env, model_path, fps, paused, completed_episodes, last_summary):
@@ -46,8 +46,13 @@ def main():
 
     model_path = Path(args.model_path).resolve()
     fixed_map = load_map(args.map_path) if args.map_path else None
-    env = CarEnv(render_mode=None, seed=args.seed, fixed_map=fixed_map)
-    model = PPO.load(str(model_path))
+    model, env_config = load_ppo_with_env_config(model_path)
+    env = CarEnv(
+        render_mode=None,
+        seed=args.seed,
+        fixed_map=fixed_map,
+        lidar_rays=env_config["lidar_rays"],
+    )
 
     obs, _ = env.reset()
     paused = False
